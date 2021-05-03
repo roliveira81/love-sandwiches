@@ -1,5 +1,6 @@
 import gspread
 from google.oauth2.service_account import Credentials
+from pprint import pprint
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -7,10 +8,12 @@ SCOPE = [
     "https://www.googleapis.com/auth/drive"
     ]
 
+
 CREDS = Credentials.from_service_account_file('creds.json')
 SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('love_sandwiches')
+
 
 def get_sales_data():
     """
@@ -31,6 +34,7 @@ def get_sales_data():
 
     return sales_data
 
+
 def validate_data(values):
     """
     Checks if the data is valid.
@@ -48,6 +52,7 @@ def validate_data(values):
 
     return True
 
+
 def update_sales_worksheet(data):
     """
     update sales worksheet, add new row with the list data provided
@@ -57,6 +62,29 @@ def update_sales_worksheet(data):
     sales_worksheet.append_row(data)
     print("sales worksheet updated successfully.\n")
 
-data = get_sales_data()
-sales_data = [int(num) for num in data]
-update_sales_worksheet(sales_data)
+
+def calculate_surplus_data(sales_row):
+    """
+    Generate de surplus data
+    """
+    print("Calculating surpulus data...\n")
+    stock = SHEET.worksheet("stock").get_all_values()
+    stock_row = stock[-1]
+
+    surplus_data = []
+    for stock, sales in zip(stock_row, sales_row):
+        surplus = int(stock) - sales
+        surplus_data.append(surplus)
+
+    return surplus_data
+
+
+def main():
+    data = get_sales_data()
+    sales_data = [int(num) for num in data]
+    update_sales_worksheet(sales_data)
+    new_surplus_data = calculate_surplus_data(sales_data)
+    print(new_surplus_data)
+
+print("Welcome to the Love Sandwiches Data Automation")
+main()
